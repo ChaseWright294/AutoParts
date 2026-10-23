@@ -1,33 +1,36 @@
-import express from "express";
-import mysql from 'mysql2'
-import cors from 'cors'
+import cors from 'cors';
+import { config } from 'dotenv';
+import express from 'express';
+import { Pool } from 'pg';
+import { fileURLToPath } from 'node:url';
+
+config({ path: fileURLToPath(new URL('../.env.local', import.meta.url)) });
+
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+    throw new Error('DATABASE_URL is required. Run `neon env pull` from the project root.');
+}
+
+const pool = new Pool({ connectionString });
+pool.on('error', (error) => {
+    console.error('Unexpected PostgreSQL pool error:', error);
+});
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-//configure database connection
-const db = mysql.createConnection({
-    host: 'localhost',
-    //TODO: replace with working credentials
-    user: 'your_username',
-    password: 'your_password',
-    database: 'your_database'
-});
-
-//establish connection to the database
-db.connect((err) => {
-    if (err) {
-        console.error('Error connecting to the database:', err);
-        return;
+app.get('/api/health', async (_req, res) => {
+    try {
+        await pool.query('SELECT 1');
+        res.json({ ok: true, database: 'connected' });
+    } catch (error) {
+        console.error('Database health check failed:', error);
+        res.status(503).json({ ok: false, database: 'disconnected' });
     }
-    console.log('Connected to the database');
 });
 
-//TODO: make .get routes for needed data
-
-//start server
-const PORT = 3306;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+const port = Number(process.env.PORT || 3001);
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Server is running on port ${port}`);
 });
