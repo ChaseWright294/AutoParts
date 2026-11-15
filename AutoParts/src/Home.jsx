@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import './Home.css'
+import Header from './Header.jsx'
 
 //TODO: need function that pulls all of these from the database and populates this list
 const products = [
@@ -9,11 +11,13 @@ const products = [
 
 function CreateProductCard({ product }) {
     return (
-        <button className="product-card" style={{ border: '1px solid #ccc', padding: '10px', margin: '10px', minHeight: '150px', width: '200px', textAlign: 'left' }}>
+        <button className="product-card">
             <h3>{product.name}</h3>
-            <p>{product.description}</p>
-            <p>Price: ${product.price.toFixed(2)}</p>
-            <p>Condition: {product.part_condition}</p>
+            <div className='product-card-details'>
+                <p>{product.description}</p>
+                <p>Price: ${product.price.toFixed(2)}</p>
+                <p>Condition: {product.part_condition}</p>
+            </div>
         </button>
     );
 }
@@ -23,7 +27,7 @@ function LoadStoreItems() {}
 function Home() {
   return (
     <div className="home-container">
-        <h2>Home</h2>
+        <Header title="Home"/>
         <div className="product-grid">
             {products.map((product) => (
                 <CreateProductCard key={product.part_id} product={product} />

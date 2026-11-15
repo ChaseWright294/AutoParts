@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import Header from './Header.jsx'
 
 function LoginButton() {
     return (
@@ -20,7 +21,7 @@ function BackButton() {
 function EmployeeLogin() {
   return (
     <div className="employee-login-container">
-        <h2>Employee Login</h2>
+        <Header title="Employee Login"/>
         <form>Username: <input type="text" name="username" /></form>
         <form>Password: <input type="password" name="password" /></form>
         <LoginButton />

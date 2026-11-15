@@ -11,8 +11,6 @@ import Checkout from './Checkout.jsx'
 import Inventory from './Inventory.jsx'
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
     <>
       <BrowserRouter>

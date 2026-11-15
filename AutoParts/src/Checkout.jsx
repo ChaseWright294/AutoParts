@@ -1,7 +1,9 @@
+import Header from './Header.jsx'
+
 function Checkout() {
   return (
     <div className="checkout-container">
-        <h2>Checkout</h2>
+        <Header title="Checkout"/>
     </div>
   );
 }

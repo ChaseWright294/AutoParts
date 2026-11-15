@@ -1,7 +1,9 @@
+import Header from './Header.jsx'
+
 function Inventory() {
   return (
     <div className="inventory-container">
-        <h2>Inventory</h2>
+        <Header title="Inventory"/>
     </div>
   );
 }

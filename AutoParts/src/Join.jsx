@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import Header from './Header.jsx'
 
 function BackButton() {
     return (
@@ -11,7 +12,7 @@ function BackButton() {
 function Join() {
   return (
     <div className="join-container">
-        <h2>Join</h2>
+        <Header title="Join"/>
 
         <p>Already have an account?</p>
         <BackButton />
