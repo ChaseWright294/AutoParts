@@ -27,7 +27,7 @@ function LoadStoreItems() {}
 function Home() {
   return (
     <div className="home-container">
-        <Header title="Home"/>
+        <Header title="Auto Parts Store"/>
         <div className="product-grid">
             {products.map((product) => (
                 <CreateProductCard key={product.part_id} product={product} />

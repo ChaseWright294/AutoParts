@@ -9,6 +9,9 @@ import EmployeeLogin from './EmployeeLogin.jsx'
 import Home from './Home.jsx'
 import Checkout from './Checkout.jsx'
 import Inventory from './Inventory.jsx'
+import Account from './Account.jsx'
+import Orders from './Orders.jsx'
+import PartInfo from './PartInfo.jsx'
 
 function App() {
   return (
@@ -21,6 +24,9 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/inventory" element={<Inventory />} />
+          <Route path="/account" element={<Account />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/part-info" element={<PartInfo />} />
 
         </Routes>
       </BrowserRouter>

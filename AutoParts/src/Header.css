@@ -1,6 +1,77 @@
-.title-text {
-    align-items: center;
+.header-container {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items:center;
     color: black;
-    padding-bottom: 1%;
     background-color: red;
+}
+.home-button-container {
+    grid-column: 1;
+    justify-self: start;
+    margin-left: 20px;
+}
+
+.home-button {
+    width: 50px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.title-text {
+    grid-column: 2;
+}
+
+.account-menu-container {
+    grid-column: 3;
+    justify-self: end;
+    margin-right: 20px;
+    margin-top: 10px;
+    position: relative;
+}
+
+.account-button {
+    width: 50px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    background-image: url('./assets/pfp.png');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    cursor: pointer;
+}
+
+.account-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 160px;
+    padding: 4px 0;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+}
+
+.account-menu-option {
+    display: block;
+    padding: 8px 12px;
+    border: 0;
+    background: none;
+    color: black;
+    font: inherit;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.account-menu-option:hover,
+.account-menu-option:focus-visible {
+    background-color: #f0f0f0;
 }
