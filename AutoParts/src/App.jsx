@@ -26,7 +26,7 @@ function App() {
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/account" element={<Account />} />
           <Route path="/orders" element={<Orders />} />
-          <Route path="/part-info" element={<PartInfo />} />
+          <Route path="/part-info/:partId" element={<PartInfo />} />
 
         </Routes>
       </BrowserRouter>

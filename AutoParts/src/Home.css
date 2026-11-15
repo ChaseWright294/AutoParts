@@ -2,6 +2,22 @@
     align-items: center;
 }
 
+.part-search-bar {
+    margin-top: 10px;
+    padding: 10px;
+    font-size: 16px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    background-color: lightgray;
+    text-align: center;
+    color: black;
+}
+
+.part-search-bar::-webkit-search-cancel-button {
+    /* make it black */
+    filter: brightness(0);
+}
+
 .product-card {
     display: flex;
     flex-direction: column;
@@ -9,7 +25,7 @@
     border: 5px solid red;
     box-sizing: border-box;
     padding: 16px;
-    height: 200px;
+    height: 80px;
     width: 200px;
     text-align:center;
     border-style: inset;
