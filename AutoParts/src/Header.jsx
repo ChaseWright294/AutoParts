@@ -63,13 +63,14 @@ function Header({ title }) {
 
     return(
         <div className='header-container'>
-            <div className = "home-button-container">
-                <Link to="/Home">
-                    <button className='home-button' aria-label='Go to home page'>
-                        Home
-                    </button>
-                </Link>
-            </div>
+            {!shouldBeHidden && (
+                <div className = "home-button-container">
+                    <Link to="/Home">
+                        <button className='home-button' aria-label='Go to home page'>
+                            Home
+                        </button>
+                    </Link>
+            </div>)}
             <h2 className='title-text'>{title}</h2>
             {!shouldBeHidden && <AccountMenu />}
         </div>
