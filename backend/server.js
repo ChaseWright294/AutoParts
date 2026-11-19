@@ -1,28 +1,15 @@
 import cors from 'cors';
-import { config } from 'dotenv';
 import express from 'express';
-import { Pool } from 'pg';
-import { fileURLToPath } from 'node:url';
-
-config({ path: fileURLToPath(new URL('../.env.local', import.meta.url)) });
-
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-    throw new Error('DATABASE_URL is required. Run `neon env pull` from the project root.');
-}
-
-const pool = new Pool({ connectionString });
-pool.on('error', (error) => {
-    console.error('Unexpected PostgreSQL pool error:', error);
-});
+import { query } from './db.js';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Confirms the API can reach the Neon database.
 app.get('/api/health', async (_req, res) => {
     try {
-        await pool.query('SELECT 1');
+        await query('SELECT 1');
         res.json({ ok: true, database: 'connected' });
     } catch (error) {
         console.error('Database health check failed:', error);
@@ -30,7 +17,24 @@ app.get('/api/health', async (_req, res) => {
     }
 });
 
+// Catalog: every part with its total stock across all stores.
+app.get('/api/parts', async (_req, res) => {
+    try {
+        const { rows } = await query(`
+            SELECT p.part_id, p.name, p.description, p.price, p.part_condition,
+                   COALESCE(SUM(i.quantity), 0)::INT AS in_stock
+            FROM part p
+            LEFT JOIN inventory i ON i.part_id = p.part_id
+            GROUP BY p.part_id
+            ORDER BY p.part_id`);
+        res.json(rows);
+    } catch (error) {
+        console.error('Failed to load parts:', error);
+        res.status(500).json({ error: 'Failed to load parts' });
+    }
+});
+
 const port = Number(process.env.PORT || 3001);
-app.listen(port, '0.0.0.0', () => {
+app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
