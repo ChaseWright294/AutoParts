@@ -82,6 +82,28 @@ app.get('/api/inventory', async (_req, res) => {
     }
 });
 
+// Get inventory for a specific store
+app.get('/api/inventory/:store_number', async (req, res) => {
+    const storeNumber = Number(req.params.store_number);
+    if (!Number.isInteger(storeNumber)) {
+        return res.status(400).json({ error: 'Invalid store number' });
+    }
+
+    try {
+        const { rows } = await query(`
+            SELECT i.store_number, i.part_id, p.name, i.quantity, p.price
+            FROM inventory i
+            JOIN part p ON i.part_id = p.part_id
+            WHERE i.store_number = $1
+            ORDER BY i.part_id
+        `, [storeNumber]);
+        res.json(rows);
+    } catch (error) {
+        console.error('Store inventory error:', error);
+        res.status(500).json({ error: 'Failed to retrieve store inventory' });
+    }
+});
+
 // Get all orders
 app.get('/api/orders', async (_req, res) => {
     try {

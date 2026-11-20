@@ -4,6 +4,7 @@
     align-items:center;
     color: black;
     background-color: red;
+    margin-bottom: 10px;
 }
 
 .header-container[data-option="employee"] {
