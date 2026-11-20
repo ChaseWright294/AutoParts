@@ -1,14 +1,8 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Header from './Header.jsx'
-
-function LoginButton() {
-    return (
-        //later, check database for matching username and password, if match, go to home page, else display error message
-        <Link to="/Home">
-            <button>Login</button>
-        </Link>
-    );
-}
+import { useAuth } from './AuthContext.jsx';
+import { loginEmployee } from './api.js';
 
 function BackButton() {
     return (
@@ -19,17 +13,49 @@ function BackButton() {
 }
 
 function EmployeeLogin() {
-  return (
-    <div className="employee-login-container">
-        <Header title="Employee Login"/>
-        <form>Username: <input type="text" name="username" /></form>
-        <form>Password: <input type="password" name="password" /></form>
-        <LoginButton />
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
+    const { login } = useAuth();
+    const navigate = useNavigate();
 
-        <p>Not an employee?</p>
-        <BackButton />
-    </div>
-  );
+    async function handleSubmit(event) {
+        event.preventDefault();
+        setError(null);
+        setSubmitting(true);
+        try {
+            const user = await loginEmployee(username, password);
+            login(user);                  // user.role is 'employee', with employee_id, store_number, is_manager
+            navigate('/inventory');
+        } catch (err) {
+            setError(err.message);
+            setSubmitting(false);
+        }
+    }
+
+    return (
+        <div className="employee-login-container">
+            <Header title="Employee Login"/>
+            <form onSubmit={handleSubmit}>
+                <div>
+                    <label>Username: <input type="text" name="username" autoComplete="username"
+                        value={username} onChange={(e) => setUsername(e.target.value)} required /></label>
+                </div>
+                <div>
+                    <label>Password: <input type="password" name="password" autoComplete="current-password"
+                        value={password} onChange={(e) => setPassword(e.target.value)} required /></label>
+                </div>
+                {error && <p role="alert">{error}</p>}
+                <button type="submit" disabled={submitting}>
+                    {submitting ? 'Logging in…' : 'Login'}
+                </button>
+            </form>
+
+            <p>Not an employee?</p>
+            <BackButton />
+        </div>
+    );
 }
 
 export default EmployeeLogin

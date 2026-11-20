@@ -1,11 +1,13 @@
 import './Header.css'
 import { Link, useLocation } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
+import { useAuth } from './AuthContext.jsx';
 
 //function to create account menu and provide dropdown functionality
 function AccountMenu() {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef(null);
+	const { logout } = useAuth();
 
     const toggleMenu = () => {
         setIsOpen((open) => !open);
@@ -45,7 +47,7 @@ function AccountMenu() {
                     <Link to="/" className='account-menu-option' role='menuitem' onClick={() => {
                         setIsOpen(false);
                         //TODO: Clear user session
-                        console.log('User logged out');
+                        logout();
                     }}>
                         Logout
                     </Link>
