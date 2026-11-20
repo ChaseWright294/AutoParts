@@ -1,10 +1,12 @@
 import cors from 'cors';
 import express from 'express';
 import { query } from './db.js';
+import authRoutes from './routes/auth.js';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use('/api/auth', authRoutes);
 
 // Confirms the API can reach the Neon database.
 app.get('/api/health', async (_req, res) => {
