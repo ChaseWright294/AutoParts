@@ -1,6 +1,5 @@
 -- Example data, copied from our Neon database on 2026-11-16.
 --
--- One change: every password_hash is a real bcrypt hash of the test
 -- Passwords are stored as plain text (demo project, no hashing).
 -- Every test account in this file uses the password "password123".
 

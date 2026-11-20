@@ -46,7 +46,6 @@ function AccountMenu() {
                     
                     <Link to="/" className='account-menu-option' role='menuitem' onClick={() => {
                         setIsOpen(false);
-                        //TODO: Clear user session
                         logout();
                     }}>
                         Logout
