@@ -7,7 +7,7 @@ import { useAuth } from './AuthContext.jsx';
 function AccountMenu() {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef(null);
-	const { logout } = useAuth();
+	const { logout, user } = useAuth();
 
     const toggleMenu = () => {
         setIsOpen((open) => !open);
@@ -40,10 +40,12 @@ function AccountMenu() {
                         Account Info
                     </Link>
                     
-                    <Link to="/orders" className='account-menu-option' role='menuitem' onClick={() => setIsOpen(false)}>
-                        Previous Orders
-                    </Link>
-                    
+                    {user?.role === 'customer' && (
+                        <Link to="/orders" className='account-menu-option' role='menuitem' onClick={() => setIsOpen(false)}>
+                            Previous Orders
+                        </Link>
+                    )}
+
                     <Link to="/" className='account-menu-option' role='menuitem' onClick={() => {
                         setIsOpen(false);
                         logout();

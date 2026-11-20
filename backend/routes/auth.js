@@ -25,7 +25,7 @@ router.post('/customer/login', async (req, res) => {
 
     try {
         const { rows } = await query(
-            `SELECT username, first_name, last_name, email
+            `SELECT username, first_name, last_name, email, phone_number, street, city, state, zip
              FROM customer
              WHERE username = $1 AND password_hash = $2`,
             [creds.username, creds.password]
@@ -45,7 +45,7 @@ router.post('/employee/login', async (req, res) => {
 
     try {
         const { rows } = await query(
-            `SELECT e.employee_id, e.username, e.first_name, e.last_name, e.store_number,
+            `SELECT e.employee_id, e.username, e.first_name, e.last_name, e.work_email, e.store_number,
                     EXISTS (SELECT 1 FROM store s WHERE s.manager_id = e.employee_id) AS is_manager
              FROM employee e
              WHERE e.username = $1 AND e.password_hash = $2`,

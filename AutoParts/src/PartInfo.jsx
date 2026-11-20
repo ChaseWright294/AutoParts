@@ -43,16 +43,16 @@ function PartInfo() {
 
       {part && (
         <div className="part-info-details">
-          <h2>{part.name}</h2>
+          <h2><strong>{part.name}</strong></h2>
           <p>{part.description}</p>
           
-          <p>Price: ${Number(part.price).toFixed(2)}</p>
-          <p>Condition: {part.part_condition}</p>
+          <p><strong>Price:</strong> ${Number(part.price).toFixed(2)}</p>
+          <p><strong>Condition:</strong> {part.part_condition}</p>
 
           {/* Tell the user relative stock amounts */}
-          {part.in_stock > 5 && <p>In stock</p>}
-          {part.in_stock > 0 && part.in_stock < 5 && <p>Low in stock, order soon!</p>}
-          {part.in_stock <= 0 && <p>Out of stock, check back soon!</p>}
+          {part.in_stock > 5 && <p><strong>In stock</strong></p>}
+          {part.in_stock > 0 && part.in_stock < 5 && <p><strong>Low in stock, order soon!</strong></p>}
+          {part.in_stock <= 0 && <p><strong>Out of stock, check back soon!</strong></p>}
         </div>
       )}
     </div>
