@@ -56,7 +56,7 @@ function AccountMenu() {
     );
 }
 
-const pathsToHideAccount = ["/", "/join", "/employee-login"]; //paths that the account button need not be displayed
+const pathsToHideAccount = ["/", "/join", "/employee-login"]; //paths that the account and home button need not be displayed
 
 function Header({ title }) {
     const { pathname } = useLocation();
@@ -67,11 +67,20 @@ function Header({ title }) {
         <div className='header-container' data-option={user?.role}>
             {!shouldBeHidden && (
                 <div className = "home-button-container">
-                    <Link to="/Home">
-                        <button className='home-button' aria-label='Go to home page'>
-                            Home
-                        </button>
-                    </Link>
+
+                    {user?.role === 'customer' ?
+                        <Link to="/Home">
+                            <button className='home-button' aria-label='Go to home page'>
+                                Home
+                            </button>
+                        </Link>
+                        :
+                        <Link to="/Inventory">
+                            <button className='home-button' aria-label='Go to inventory page'>
+                                Home
+                            </button>
+                        </Link>
+                    }
             </div>)}
             <h2 className='title-text'>{title}</h2>
             {!shouldBeHidden && <AccountMenu />}
