@@ -1,8 +1,9 @@
 -- Example data, copied from our Neon database on 2026-11-16.
 --
--- One change: every password_hash is a real bcrypt hash of the test
--- password "password123", so the login routes can check passwords.
--- (In Neon these are currently plain-text placeholders.)
+-- Passwords are stored as plain text (demo project, no hashing).
+-- Every test account in this file uses the password "password123".
+
+-- Testing passwords different from shared Neon database passwords
 
 -- Stores first without managers, because store and employee reference each other.
 INSERT INTO store (store_number, street, city, state, zip, phone_number, manager_id) VALUES
@@ -10,14 +11,14 @@ INSERT INTO store (store_number, street, city, state, zip, phone_number, manager
     (2, '1548 University Drive', 'Denton', 'TX', '76203', '9405651234', NULL);
 
 INSERT INTO employee (employee_id, username, password_hash, first_name, last_name, work_email, phone_number, store_number) VALUES
-    (1, 'MannyGer246', '$2b$10$sCcgJvB60T.sh6Oq6P6G3eVdvXut/SNHxfpv2cKMI7f5Rh0uRtPkO', 'Manny',     'Ger',       'MannyGer@AutoParts.com',           '5552461298', 1),
-    (2, 'SquidTen11',  '$2b$10$3TLoyFaX6WoFOEPhqol6H.AOidiArp5l/mo3IWy24BHB09g9qqxa2', 'Squidward', 'Tentacles', 'SquidwardTentacles@AutoParts.com', '3435658888', 2);
+    (1, 'MannyGer246', 'password123', 'Manny',     'Ger',       'MannyGer@AutoParts.com',           '5552461298', 1),
+    (2, 'SquidTen11',  'password123', 'Squidward', 'Tentacles', 'SquidwardTentacles@AutoParts.com', '3435658888', 2);
 
 UPDATE store SET manager_id = 1 WHERE store_number = 1;
 
 INSERT INTO customer (username, password_hash, first_name, last_name, email, phone_number, street, city, state, zip) VALUES
-    ('JohnSmith123', '$2b$10$jc44YUm2oJlmW0IXQZYWZuNfQxbl7fMm.Xwx6sNizQA7g4PGrRSv6', 'John', 'Smith', 'JohnSmith@gmail.com',    '1234567890', '123 Street St',     'Denton', 'TX', '76201'),
-    ('Jane-Doe-456', '$2b$10$i/z/pamjJ6eLAHmp/gA77um5MaokijCgVK.KCSgnXWwbXNAlvXuce', 'Jane', 'Doe',   'crazycatlady@yahoo.com', '5551947656', '1101 Union Circle', 'Denton', 'TX', '76203');
+    ('JohnSmith123', 'password123', 'John', 'Smith', 'JohnSmith@gmail.com',    '1234567890', '123 Street St',     'Denton', 'TX', '76201'),
+    ('Jane-Doe-456', 'password123', 'Jane', 'Doe',   'crazycatlady@yahoo.com', '5551947656', '1101 Union Circle', 'Denton', 'TX', '76203');
 
 INSERT INTO part (part_id, name, description, price, part_condition) VALUES
     (1, 'Spark Plug',    'It plugs the sparks',                 13.49,  'new'),

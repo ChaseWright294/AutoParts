@@ -1,14 +1,8 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Header from './Header.jsx'
-
-function LoginButton() {
-    return (
-        //later, check database for matching username and password, if match, go to home page, else display error message
-        <Link to="/Home">
-            <button>Login</button>
-        </Link>
-    );
-}
+import { useAuth } from './AuthContext.jsx';
+import { loginCustomer } from './api.js';
 
 function JoinButton() {
     return (
@@ -27,20 +21,52 @@ function EmployeeLoginButton() {
 }
 
 function Login() {
-  return (
-    <div className="login-container">
-        <Header title="Login"/>
-        <form>Username: <input type="text" name="username" /></form>
-        <form>Password: <input type="password" name="password" /></form>
-        <LoginButton />
+	const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
+    const { login } = useAuth();
+    const navigate = useNavigate();
 
-        <p>Don't have an account?</p>
-        <JoinButton />
+    async function handleSubmit(event) {
+        event.preventDefault();          // stop the browser's default full-page form submit
+        setError(null);
+        setSubmitting(true);
+        try {
+            const user = await loginCustomer(username, password);
+            login(user);                 // save to context + localStorage
+            navigate('/home');
+        } catch (err) {
+            setError(err.message);       // e.g. "Invalid username or password"
+            setSubmitting(false);
+        }
+    }
 
-        <p>For Staff Members</p>
-        <EmployeeLoginButton />
-    </div>
-  );
+    return (
+        <div className="login-container">
+            <Header title="Login"/>
+            <form onSubmit={handleSubmit}>
+                <div>
+                    <label>Username: <input type="text" name="username" autoComplete="username"
+                        value={username} onChange={(e) => setUsername(e.target.value)} required /></label>
+                </div>
+                <div>
+                    <label>Password: <input type="password" name="password" autoComplete="current-password"
+                        value={password} onChange={(e) => setPassword(e.target.value)} required /></label>
+                </div>
+                {error && <p role="alert">{error}</p>}
+                <button type="submit" disabled={submitting}>
+                    {submitting ? 'Logging in…' : 'Login'}
+                </button>
+            </form>
+
+            <p>Don't have an account?</p>
+            <JoinButton />
+
+            <p>For Staff Members</p>
+            <EmployeeLoginButton />
+        </div>
+    );
 }
 
 export default Login

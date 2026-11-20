@@ -6,7 +6,7 @@ PostgreSQL on Neon. The tables follow the team's E-R and schema diagrams.
 |---|---|
 | `schema.sql` | All 9 tables with their keys and constraints. Matches the live Neon database exactly (61 columns, 33 constraints, checked 2026-11-16). |
 | `views.sql` | `order_total` view: the derived `total()` attribute of `orders`. Not yet created in Neon. |
-| `seed.sql` | The example data from Neon, with real bcrypt password hashes. |
+| `seed.sql` | The example data from Neon, with plain-text test passwords. |
 | `setup.js` | Runs the three files above in one transaction (`npm run db:setup`). |
 | `../db.js` | The shared connection pool the API uses. |
 
@@ -37,8 +37,7 @@ All use the password `password123`.
 
 These differ from the diagrams or will matter for the app. None have been changed.
 
-1. **Passwords in Neon are plain text**, not hashes. Replace them with bcrypt
-   hashes (as in `seed.sql`) before the login routes go live.
+1. **Passwords in Neon are plain text**, not hashes. Good for demo in class. Please replace with encryption/encrypted passwords for deployment.
 2. **`inventory.store_number` has no foreign key** to `store`, although the
    diagram shows one. Fix:
    `ALTER TABLE inventory ADD CONSTRAINT store_number FOREIGN KEY (store_number) REFERENCES store (store_number);`
