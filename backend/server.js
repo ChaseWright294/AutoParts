@@ -36,6 +36,71 @@ app.get('/api/parts', async (_req, res) => {
     }
 });
 
+ 
+ // Get inventory for every store
+app.get('/api/inventory', async (_req, res) => {
+    try {
+        const { rows } = await query(`
+            SELECT i.store_number, i.part_id, p.name,
+                   i.quantity, p.price
+            FROM inventory i
+            JOIN part p ON i.part_id = p.part_id
+            ORDER BY i.store_number, i.part_id
+        `);
+        res.json(rows);
+    } catch (error) {
+        console.error('Inventory error:', error);
+        res.status(500).json({ error: 'Failed to retrieve inventory' });
+    }
+});
+
+// Get all orders
+app.get('/api/orders', async (_req, res) => {
+    try {
+        const { rows } = await query(`
+            SELECT order_id, customer_username, store_number,
+                   order_date, status, is_online
+            FROM orders
+            ORDER BY order_date DESC
+        `);
+        res.json(rows);
+    } catch (error) {
+        console.error('Orders error:', error);
+        res.status(500).json({ error: 'Failed to retrieve orders' });
+    }
+});
+
+// Get one order and its items
+app.get('/api/orders/:id', async (req, res) => {
+    try {
+        const { rows } = await query(
+            'SELECT * FROM orders WHERE order_id = $1',
+            [req.params.id]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        const items = await query(`
+            SELECT oi.part_id, p.name, oi.quantity, oi.unit_price
+            FROM order_item oi
+            JOIN part p ON oi.part_id = p.part_id
+            WHERE oi.order_id = $1
+            ORDER BY oi.part_id
+        `, [req.params.id]);
+
+        res.json({
+            ...rows[0],
+            items: items.rows
+        });
+    } catch (error) {
+        console.error('Order details error:', error);
+        res.status(500).json({ error: 'Failed to retrieve order details' });
+    }
+});
+
+
 const port = Number(process.env.PORT || 3001);
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
