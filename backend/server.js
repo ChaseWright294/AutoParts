@@ -34,6 +34,34 @@ app.get('/api/parts', async (_req, res) => {
     }
 });
 
+app.get('/api/parts/:id', async (_req, res) => {
+    const partID = Number(_req.params.id);
+
+    if (!Number.isInteger(partID)) {
+        return res.status(400).json({ error: 'Invalid part ID'});
+    }
+
+    try {
+        const { rows } = await query(`
+            SELECT p.part_id, p.name, p.description, p.price, p.part_condition,
+                   COALESCE(SUM(i.quantity), 0)::INT AS in_stock
+            FROM part p
+            LEFT JOIN inventory i ON i.part_id = p.part_id
+            WHERE p.part_id = $1
+            GROUP BY p.part_id
+        `, [partID]);
+
+        if (rows.length === 0) {
+            return res.status(400).json({ error: 'Part not found'})
+        }
+
+        res.json(rows[0])
+    } catch (error) {
+        console.error('Failed to load part:,', error);
+        res.status(500).json({ error: 'Failed to load part'});
+    }
+})
+
  
  // Get inventory for every store
 app.get('/api/inventory', async (_req, res) => {
