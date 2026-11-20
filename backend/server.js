@@ -83,8 +83,8 @@ app.get('/api/inventory', async (_req, res) => {
 });
 
 // Get inventory for a specific store
-app.get('/api/inventory/:store_number', async (req, res) => {
-    const storeNumber = Number(req.params.store_number);
+app.get('/api/inventory/:store_number', async (_req, res) => {
+    const storeNumber = Number(_req.params.store_number);
     if (!Number.isInteger(storeNumber)) {
         return res.status(400).json({ error: 'Invalid store number' });
     }
@@ -103,6 +103,21 @@ app.get('/api/inventory/:store_number', async (req, res) => {
         res.status(500).json({ error: 'Failed to retrieve store inventory' });
     }
 });
+
+// Get list of stores
+app.get('/api/stores', async (_req, res) => {
+    try {
+        const { rows } = await query(`
+                SELECT store_number, street, city, state, zip, phone_number, manager_id
+                FROM store
+                ORDER BY store_number
+            `);
+            res.json(rows);
+    } catch(error) {
+        console.error('Stores error:', error);
+        res.status(500).json({ error: 'Failed to retrieve stores'})
+    }
+})
 
 // Get all orders
 app.get('/api/orders', async (_req, res) => {
@@ -147,6 +162,48 @@ app.get('/api/orders/:id', async (req, res) => {
     } catch (error) {
         console.error('Order details error:', error);
         res.status(500).json({ error: 'Failed to retrieve order details' });
+    }
+});
+
+app.post('/api/inventory/:store_number/:part_id/receive', async (req, res) => {
+    const storeNumber = Number(req.params.store_number);
+    const partId = Number(req.params.part_id);
+    const quantity = req.body?.quantity;
+
+    if (!Number.isSafeInteger(storeNumber) || storeNumber <= 0) {
+        return res.status(400).json({ error: 'Invalid store number' });
+    }
+    if (!Number.isSafeInteger(partId) || partId <= 0) {
+        return res.status(400).json({ error: 'Invalid part ID' });
+    }
+    if (!Number.isSafeInteger(quantity) || quantity <= 0) {
+        return res.status(400).json({ error: 'Quantity must be a positive whole number' });
+    }
+
+    try {
+        const { rows } = await query(
+            `INSERT INTO inventory (store_number, part_id, quantity)
+             SELECT $1, $2, $3
+             WHERE EXISTS (
+                 SELECT 1 FROM store WHERE store_number = $1
+             )
+             AND EXISTS (
+                 SELECT 1 FROM part WHERE part_id = $2
+             )
+             ON CONFLICT (store_number, part_id)
+             DO UPDATE SET quantity = inventory.quantity + EXCLUDED.quantity
+             RETURNING store_number, part_id, quantity`,
+            [storeNumber, partId, quantity]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'Store or part not found' });
+        }
+
+        return res.json(rows[0]);
+    } catch (error) {
+        console.error('Failed to add inventory:', error);
+        return res.status(500).json({ error: 'Failed to add inventory' });
     }
 });
 

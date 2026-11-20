@@ -1,7 +1,7 @@
 .inventory-list {
     width: 90%;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     border: 1px solid #ccc;
     margin-top: 10px;
     justify-self: center;
@@ -17,5 +17,9 @@
 .inventory-list .header {
     font-weight: bold;
     background-color: #f0f0f0;
+    border: 1px solid #ccc;
+}
+
+.inventory-actions {
     border: 1px solid #ccc;
 }
