@@ -60,10 +60,11 @@ const pathsToHideAccount = ["/", "/join", "/employee-login"]; //paths that the a
 
 function Header({ title }) {
     const { pathname } = useLocation();
+    const { user } = useAuth();
     const shouldBeHidden = pathsToHideAccount.includes(pathname);
 
     return(
-        <div className='header-container'>
+        <div className='header-container' data-option={user?.role}>
             {!shouldBeHidden && (
                 <div className = "home-button-container">
                     <Link to="/Home">
