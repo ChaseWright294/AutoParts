@@ -1,0 +1,37 @@
+.orders-scroll {
+    width: 90%;
+    margin: 10px auto 30px;
+    overflow-x: auto;
+}
+
+.orders-list {
+    min-width: 850px;
+    border: 1px solid #ccc;
+}
+
+.orders-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 1.35fr 0.6fr 2fr 0.8fr 0.9fr;
+}
+
+.orders-grid > * {
+    min-width: 0;
+    margin: 0;
+    padding: 5px;
+    border: 1px solid #ccc;
+    overflow-wrap: anywhere;
+}
+
+.orders-header {
+    font-weight: bold;
+    background-color: #f0f0f0;
+}
+
+.order-items {
+    display: flex;
+    flex-direction: column;
+}
+
+.order-status {
+    text-transform: capitalize;
+}

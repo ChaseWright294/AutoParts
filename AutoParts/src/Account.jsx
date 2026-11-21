@@ -26,7 +26,7 @@ function UserInfo() {
           <p>{user.work_email}</p>
           <p>{user.employee_id}</p>
           <p>{user.store_number}</p>
-          <p>{user.role}</p>
+          {user.is_manager ? <p>Manager</p> : <p>Employee</p>}
         </div>
 
 

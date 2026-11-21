@@ -59,4 +59,35 @@ router.post('/employee/login', async (req, res) => {
     }
 });
 
+// register a new customer
+router.post('/customer/register', async (req, res) => {
+    const { username, password, first_name, last_name, email, phone_number, street, city, state, zip } = req.body ?? {};
+
+    if (![username, password, first_name, last_name, email, phone_number, street, city, state, zip]
+        .every(value => typeof value === 'string' && value.trim())) {
+        return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    if (!/^\d{10}$/.test(phone_number.trim())) {
+        return res.status(400).json({ error: 'Phone number must contain 10 digits' });
+    }
+
+    try {
+        const { rows } = await query(
+            `INSERT INTO customer (username, password_hash, first_name, last_name, email, phone_number, street, city, state, zip)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+             RETURNING username, first_name, last_name, email, phone_number, street, city, state, zip`,
+            [username.trim(), password, first_name.trim(), last_name.trim(), email.trim(), phone_number.trim(), street.trim(), city.trim(), state.trim(), zip.trim()]
+        );
+
+        return res.status(201).json(rows[0]);
+    } catch (error) {
+        if (error.code === '23505') {
+            return res.status(409).json({ error: 'Username, email, or phone number is already in use' });
+        }
+        console.error('Customer registration failed:', error);
+        return res.status(500).json({ error: 'Failed to create customer' });
+    }
+});
+
 export default router;

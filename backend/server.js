@@ -35,14 +35,46 @@ app.get('/api/parts', async (_req, res) => {
     }
 });
 
-// Get inventory for every store
+
+app.get('/api/parts/:id', async (_req, res) => {
+    const partID = Number(_req.params.id);
+
+    if (!Number.isInteger(partID)) {
+        return res.status(400).json({ error: 'Invalid part ID'});
+    }
+
+    try {
+        const { rows } = await query(`
+            SELECT p.part_id, p.name, p.description, p.price, p.part_condition,
+                   COALESCE(SUM(i.quantity), 0)::INT AS in_stock
+            FROM part p
+            LEFT JOIN inventory i ON i.part_id = p.part_id
+            WHERE p.part_id = $1
+            GROUP BY p.part_id
+        `, [partID]);
+
+        if (rows.length === 0) {
+            return res.status(400).json({ error: 'Part not found'})
+        }
+
+        res.json(rows[0])
+    } catch (error) {
+        console.error('Failed to load part:,', error);
+        res.status(500).json({ error: 'Failed to load part'});
+    }
+})
+
+ 
+
 app.get('/api/inventory', async (_req, res) => {
     try {
         const { rows } = await query(`
             SELECT i.store_number, i.part_id, p.name,
-                   i.quantity, p.price
+                   i.quantity, p.price,
+                   s.street, s.city, s.state, s.zip
             FROM inventory i
             JOIN part p ON i.part_id = p.part_id
+            JOIN store s ON i.store_number = s.store_number
             ORDER BY i.store_number, i.part_id
         `);
         res.json(rows);
@@ -51,6 +83,43 @@ app.get('/api/inventory', async (_req, res) => {
         res.status(500).json({ error: 'Failed to retrieve inventory' });
     }
 });
+
+// Get inventory for a specific store
+app.get('/api/inventory/:store_number', async (_req, res) => {
+    const storeNumber = Number(_req.params.store_number);
+    if (!Number.isInteger(storeNumber)) {
+        return res.status(400).json({ error: 'Invalid store number' });
+    }
+
+    try {
+        const { rows } = await query(`
+            SELECT i.store_number, i.part_id, p.name, i.quantity, p.price
+            FROM inventory i
+            JOIN part p ON i.part_id = p.part_id
+            WHERE i.store_number = $1
+            ORDER BY i.part_id
+        `, [storeNumber]);
+        res.json(rows);
+    } catch (error) {
+        console.error('Store inventory error:', error);
+        res.status(500).json({ error: 'Failed to retrieve store inventory' });
+    }
+});
+
+// Get list of stores
+app.get('/api/stores', async (_req, res) => {
+    try {
+        const { rows } = await query(`
+                SELECT store_number, street, city, state, zip, phone_number, manager_id
+                FROM store
+                ORDER BY store_number
+            `);
+            res.json(rows);
+    } catch(error) {
+        console.error('Stores error:', error);
+        res.status(500).json({ error: 'Failed to retrieve stores'})
+    }
+})
 
 // Get all orders
 app.get('/api/orders', async (_req, res) => {
@@ -65,6 +134,40 @@ app.get('/api/orders', async (_req, res) => {
     } catch (error) {
         console.error('Orders error:', error);
         res.status(500).json({ error: 'Failed to retrieve orders' });
+    }
+});
+
+// Get a customer's order history with item details and totals.
+app.get('/api/customers/:username/orders', async (req, res) => {
+    const username = req.params.username.trim();
+    if (!username) {
+        return res.status(400).json({ error: 'Customer username is required' });
+    }
+
+    try {
+        const { rows } = await query(`
+            SELECT o.order_id, o.store_number, o.order_date, o.status, o.is_online,
+                   COALESCE(SUM(oi.quantity * oi.unit_price), 0)::NUMERIC(10,2) AS total,
+                   COALESCE(
+                       json_agg(json_build_object(
+                           'part_id', oi.part_id,
+                           'name', p.name,
+                           'quantity', oi.quantity,
+                           'unit_price', oi.unit_price
+                       ) ORDER BY oi.part_id) FILTER (WHERE oi.part_id IS NOT NULL),
+                       '[]'::json
+                   ) AS items
+            FROM orders o
+            LEFT JOIN order_item oi ON oi.order_id = o.order_id
+            LEFT JOIN part p ON p.part_id = oi.part_id
+            WHERE o.customer_username = $1
+            GROUP BY o.order_id
+            ORDER BY o.order_date DESC
+        `, [username]);
+        res.json(rows);
+    } catch (error) {
+        console.error('Customer order history error:', error);
+        res.status(500).json({ error: 'Failed to retrieve customer orders' });
     }
 });
 
@@ -98,7 +201,49 @@ app.get('/api/orders/:id', async (req, res) => {
     }
 });
 
-// Create order / checkout for online/in-store orders and optional reorders
+app.post('/api/inventory/:store_number/:part_id/receive', async (req, res) => {
+    const storeNumber = Number(req.params.store_number);
+    const partId = Number(req.params.part_id);
+    const quantity = req.body?.quantity;
+
+    if (!Number.isSafeInteger(storeNumber) || storeNumber <= 0) {
+        return res.status(400).json({ error: 'Invalid store number' });
+    }
+    if (!Number.isSafeInteger(partId) || partId <= 0) {
+        return res.status(400).json({ error: 'Invalid part ID' });
+    }
+    if (!Number.isSafeInteger(quantity) || quantity <= 0) {
+        return res.status(400).json({ error: 'Quantity must be a positive whole number' });
+    }
+
+    try {
+        const { rows } = await query(
+            `INSERT INTO inventory (store_number, part_id, quantity)
+             SELECT $1, $2, $3
+             WHERE EXISTS (
+                 SELECT 1 FROM store WHERE store_number = $1
+             )
+             AND EXISTS (
+                 SELECT 1 FROM part WHERE part_id = $2
+             )
+             ON CONFLICT (store_number, part_id)
+             DO UPDATE SET quantity = inventory.quantity + EXCLUDED.quantity
+             RETURNING store_number, part_id, quantity`,
+            [storeNumber, partId, quantity]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'Store or part not found' });
+        }
+
+        return res.json(rows[0]);
+    } catch (error) {
+        console.error('Failed to add inventory:', error);
+        return res.status(500).json({ error: 'Failed to add inventory' });
+    }
+});
+
+// Create order / checkout (supports online/in-store orders and optional reorders)
 app.post('/api/orders', async (req, res) => {
     const {
         order_id,
