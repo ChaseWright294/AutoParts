@@ -137,6 +137,40 @@ app.get('/api/orders', async (_req, res) => {
     }
 });
 
+// Get a customer's order history with item details and totals.
+app.get('/api/customers/:username/orders', async (req, res) => {
+    const username = req.params.username.trim();
+    if (!username) {
+        return res.status(400).json({ error: 'Customer username is required' });
+    }
+
+    try {
+        const { rows } = await query(`
+            SELECT o.order_id, o.store_number, o.order_date, o.status, o.is_online,
+                   COALESCE(SUM(oi.quantity * oi.unit_price), 0)::NUMERIC(10,2) AS total,
+                   COALESCE(
+                       json_agg(json_build_object(
+                           'part_id', oi.part_id,
+                           'name', p.name,
+                           'quantity', oi.quantity,
+                           'unit_price', oi.unit_price
+                       ) ORDER BY oi.part_id) FILTER (WHERE oi.part_id IS NOT NULL),
+                       '[]'::json
+                   ) AS items
+            FROM orders o
+            LEFT JOIN order_item oi ON oi.order_id = o.order_id
+            LEFT JOIN part p ON p.part_id = oi.part_id
+            WHERE o.customer_username = $1
+            GROUP BY o.order_id
+            ORDER BY o.order_date DESC
+        `, [username]);
+        res.json(rows);
+    } catch (error) {
+        console.error('Customer order history error:', error);
+        res.status(500).json({ error: 'Failed to retrieve customer orders' });
+    }
+});
+
 // Get one order and its items
 app.get('/api/orders/:id', async (req, res) => {
     try {
