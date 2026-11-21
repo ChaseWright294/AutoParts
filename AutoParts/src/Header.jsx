@@ -41,6 +41,16 @@ function AccountMenu() {
                         Account Info
                     </Link>
                     
+                    {user?.role === 'employee' && user?.is_manager === true && (
+                        <Link
+                            to="/manage-employees"
+                            className="account-menu-option"
+                            role="menuitem"
+                            onClick={() => setIsOpen(false)}
+                        >
+                            Manage Employees
+                        </Link>
+                    )}                                   
                     {user?.role === 'customer' && (
                         <Link to="/orders" className='account-menu-option' role='menuitem' onClick={() => setIsOpen(false)}>
                             Previous Orders

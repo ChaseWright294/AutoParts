@@ -17,3 +17,14 @@ export const loginEmployee = (username, password) => post('/auth/employee/login'
 
 export const getInventory = () => request('/inventory');
 export const createOrder = (data) => post('/orders', data);
+
+export const getEmployees = (storeNumber) =>
+    request(`/employees?store_number=${encodeURIComponent(storeNumber)}`);
+
+export const addEmployee = (data) =>
+    post('/employees', data);
+
+export const deleteEmployee = (employeeId) =>
+    request(`/employees/${employeeId}`, {
+        method: 'DELETE'
+    });
