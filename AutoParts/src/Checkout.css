@@ -1,0 +1,146 @@
+
+.checkout-content {
+    max-width: 1200px;
+    margin: 35px auto;
+    padding: 0 20px;
+    color: #222;
+}
+
+.checkout-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 25px;
+    align-items: start;
+    text-align: left;
+}
+
+.checkout-items,
+.checkout-summary,
+.checkout-success,
+.empty-cart {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+}
+
+.checkout-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 20px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.checkout-item a,
+.checkout-content a {
+    color: #333;
+}
+
+.checkout-item p {
+    margin: 6px 0;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.quantity-controls button {
+    width: 35px;
+    height: 35px;
+    padding: 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background: #eee;
+    color: #222;
+    cursor: pointer;
+}
+
+.remove-item {
+    color: #b00000;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+}
+
+.checkout-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.checkout-summary label {
+    font-weight: 600;
+}
+
+.checkout-summary select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background: white;
+    color: #222;
+}
+
+.checkout-total {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 0;
+    border-top: 1px solid #ddd;
+    font-size: 1.2rem;
+}
+
+.place-order-button {
+    width: 100%;
+    padding: 14px;
+    background: #d60000;
+    color: white;
+    border: 0;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.place-order-button:hover:not(:disabled) {
+    background: #b00000;
+}
+
+.checkout-content button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.checkout-error {
+    color: #b00000;
+    font-size: 0.9rem;
+}
+
+.checkout-note {
+    color: #666;
+    font-size: 0.85rem;
+}
+
+.checkout-success,
+.empty-cart {
+    text-align: center;
+    padding: 45px;
+}
+
+.checkout-success h2 {
+    color: #198754;
+}
+
+@media (max-width: 800px) {
+    .checkout-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .checkout-item {
+        flex-wrap: wrap;
+    }
+}
