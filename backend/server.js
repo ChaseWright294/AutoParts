@@ -66,13 +66,16 @@ app.get('/api/parts/:id', async (_req, res) => {
 
  
  // Get inventory for every store
+
 app.get('/api/inventory', async (_req, res) => {
     try {
         const { rows } = await query(`
             SELECT i.store_number, i.part_id, p.name,
-                   i.quantity, p.price
+                   i.quantity, p.price,
+                   s.street, s.city, s.state, s.zip
             FROM inventory i
             JOIN part p ON i.part_id = p.part_id
+            JOIN store s ON i.store_number = s.store_number
             ORDER BY i.store_number, i.part_id
         `);
         res.json(rows);
@@ -81,6 +84,7 @@ app.get('/api/inventory', async (_req, res) => {
         res.status(500).json({ error: 'Failed to retrieve inventory' });
     }
 });
+
 
 // Get all orders
 app.get('/api/orders', async (_req, res) => {

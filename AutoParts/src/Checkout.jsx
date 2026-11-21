@@ -21,6 +21,10 @@ function Checkout() {
     const [inventory, setInventory] = useState([]);
     const [store, setStore] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('card');
+    const [cardName, setCardName] = useState('');
+    const [cardNumber, setCardNumber] = useState('');
+    const [cardExpiration, setCardExpiration] = useState('');
+    const [cardCvv, setCardCvv] = useState('');
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [inventoryError, setInventoryError] = useState('');
@@ -58,9 +62,17 @@ function Checkout() {
         return <Navigate to="/inventory" replace />;
     }
 
-    const stores = [...new Set(
-        inventory.map(item => Number(item.store_number))
-    )].sort((a, b) => a - b);
+    const stores = Array.from(
+    new Map(
+        inventory.map(item => [
+            Number(item.store_number),
+            {
+                store_number: Number(item.store_number),
+                address: `${item.street}, ${item.city}, ${item.state} ${item.zip}`
+            }
+        ])
+    ).values()
+    ).sort((a, b) => a.store_number - b.store_number);
 
     function availableStock(partId, storeNumber) {
         const row = inventory.find(item =>
@@ -98,15 +110,16 @@ function Checkout() {
 
         try {
             const result = await createOrder({
-                customer_username: user.username,
-                store_number: Number(store),
-                is_online: true,
-                payment_method: paymentMethod,
-                items: items.map(item => ({
-                    part_id: item.part_id,
-                    quantity: item.quantity
-                }))
-            });
+                  customer_username: user.username,
+                  store_number: Number(store),
+                  is_online: true,
+                  payment_method: paymentMethod,
+                  items: items.map(item => ({
+                      part_id: item.part_id,
+                      quantity: item.quantity
+                  }))
+              });
+             
 
             setOrder(result);
             clearCart();
@@ -250,9 +263,12 @@ function Checkout() {
                                     {loading ? 'Loading stores...' : 'Choose a store'}
                                 </option>
 
-                                {stores.map(number => (
-                                    <option key={number} value={number}>
-                                        Store {number}
+                                {stores.map(location => (
+                                    <option
+                                        key={location.store_number}
+                                        value={location.store_number}
+                                    >
+                                        {location.address}
                                     </option>
                                 ))}
                             </select>
@@ -286,9 +302,101 @@ function Checkout() {
                                 <option value="cash">Cash</option>
                             </select>
 
-                            <p className="checkout-note">
-                                Demo checkout. No real payment is processed.
-                            </p>
+                            
+                            {paymentMethod === 'card' ? (
+                                <div className="checkout-card-fields">
+
+                                    <p className="checkout-note">
+                                        Demo payment only. Use fictional card information.
+                                        Do not enter real card details.
+                                    </p>
+
+                                    <label htmlFor="card-name">Cardholder Name</label>
+                                    <input
+                                        id="card-name"
+                                        type="text"
+                                        placeholder="Test Customer"
+                                        autoComplete="off"
+                                        value={cardName}
+                                        required
+                                        disabled={submitting}
+                                        onChange={event => setCardName(event.target.value)}
+                                    />
+
+                                    <label htmlFor="card-number">Card Number</label>
+                                    <input
+                                        id="card-number"
+                                        type="text"
+                                        inputMode="numeric"
+                                        placeholder="4242 4242 4242 4242"
+                                        autoComplete="off"
+                                        maxLength={19}
+                                        pattern="[0-9 ]{16,19}"
+                                        value={cardNumber}
+                                        required
+                                        disabled={submitting}
+                                        onChange={event =>
+                                            setCardNumber(
+                                                event.target.value
+                                                    .replace(/\D/g, '')
+                                                    .slice(0, 16)
+                                                    .replace(/(.{4})/g, '$1 ')
+                                                    .trim()
+                                            )
+                                        }
+                                    />
+
+                                    <div className="checkout-card-row">
+                                        <div>
+                                            <label htmlFor="card-expiration">
+                                                Expiration Date
+                                            </label>
+
+                                            <input
+                                                id="card-expiration"
+                                                type="text"
+                                                placeholder="MM/YY"
+                                                autoComplete="off"
+                                                maxLength={5}
+                                                pattern="(0[1-9]|1[0-2])/[0-9]{2}"
+                                                value={cardExpiration}
+                                                required
+                                                disabled={submitting}
+                                                onChange={event =>
+                                                    setCardExpiration(event.target.value)
+                                                }
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="card-cvv">CVV</label>
+
+                                            <input
+                                                id="card-cvv"
+                                                type="password"
+                                                inputMode="numeric"
+                                                placeholder="123"
+                                                autoComplete="off"
+                                                maxLength={4}
+                                                pattern="[0-9]{3,4}"
+                                                value={cardCvv}
+                                                required
+                                                disabled={submitting}
+                                                onChange={event =>
+                                                    setCardCvv(
+                                                        event.target.value.replace(/\D/g, '')
+                                                    )
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <p className="checkout-note">
+                                    Cash payment will be made at the selected store.
+                                </p>
+                            )}
+
 
                             <div className="checkout-total">
                                 <strong>Total</strong>
