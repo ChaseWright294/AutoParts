@@ -7,7 +7,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/api/auth', authRoutes);
-
 // Confirms the API can reach the Neon database.
 app.get('/api/health', async (_req, res) => {
     try {
@@ -35,6 +34,7 @@ app.get('/api/parts', async (_req, res) => {
         res.status(500).json({ error: 'Failed to load parts' });
     }
 });
+
 
 app.get('/api/parts/:id', async (_req, res) => {
     const partID = Number(_req.params.id);
@@ -65,14 +65,16 @@ app.get('/api/parts/:id', async (_req, res) => {
 })
 
  
- // Get inventory for every store
+
 app.get('/api/inventory', async (_req, res) => {
     try {
         const { rows } = await query(`
             SELECT i.store_number, i.part_id, p.name,
-                   i.quantity, p.price
+                   i.quantity, p.price,
+                   s.street, s.city, s.state, s.zip
             FROM inventory i
             JOIN part p ON i.part_id = p.part_id
+            JOIN store s ON i.store_number = s.store_number
             ORDER BY i.store_number, i.part_id
         `);
         res.json(rows);
@@ -213,7 +215,7 @@ app.post('/api/orders', async (req, res) => {
         order_id,
         customer_username,
         store_number,
-        employee_id,
+        employee_id = null,
         is_online = false,
         reorder_of = null,
         payment_method = 'card',
@@ -221,7 +223,7 @@ app.post('/api/orders', async (req, res) => {
         items = [],
     } = req.body;
 
-    if (!customer_username || !store_number || !employee_id || !Array.isArray(items) || items.length === 0) {
+    if (!customer_username || !store_number || (!is_online && !employee_id) || !Array.isArray(items) || items.length === 0) {
         return res.status(400).json({ error: 'Missing required order fields or items' });
     }
 
@@ -232,6 +234,23 @@ app.post('/api/orders', async (req, res) => {
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
+
+        let resolvedEmployeeId = employee_id ? Number(employee_id) : null;
+        if (!resolvedEmployeeId) {
+            const empRes = await client.query(
+                `SELECT COALESCE(s.manager_id, e.employee_id) AS emp_id
+                 FROM store s
+                 LEFT JOIN employee e ON e.store_number = s.store_number
+                 WHERE s.store_number = $1
+                 ORDER BY e.employee_id ASC
+                 LIMIT 1`,
+                [store_number]
+            );
+            if (empRes.rowCount === 0 || !empRes.rows[0].emp_id) {
+                throw new Error('NO_EMPLOYEE_AVAILABLE');
+            }
+            resolvedEmployeeId = Number(empRes.rows[0].emp_id);
+        }
 
         let totalAmount = 0;
         const resolvedItems = [];
@@ -269,7 +288,7 @@ app.post('/api/orders', async (req, res) => {
         await client.query(
             `INSERT INTO orders (order_id, reorder_of, customer_username, store_number, is_online, status, employee_id)
              VALUES ($1, $2, $3, $4, $5, 'pending', $6)`,
-            [finalOrderId, reorder_of, customer_username, store_number, Boolean(is_online), employee_id]
+            [finalOrderId, reorder_of, customer_username, store_number, Boolean(is_online), resolvedEmployeeId]
         );
 
         for (const rItem of resolvedItems) {
@@ -297,6 +316,9 @@ app.post('/api/orders', async (req, res) => {
         if (error.message === 'PART_NOT_FOUND' || error.message === 'INVALID_ITEM') {
             return res.status(400).json({ error: error.message });
         }
+        if (error.message === 'NO_EMPLOYEE_AVAILABLE') {
+            return res.status(400).json({ error: 'No employee found for store to assign order' });
+        }
         console.error('Checkout failed:', error);
         res.status(500).json({ error: 'Failed to create order' });
     } finally {
@@ -323,6 +345,10 @@ app.patch('/api/orders/:id/cancel', async (req, res) => {
         if (order.status === 'cancelled') {
             await client.query('ROLLBACK');
             return res.status(400).json({ error: 'Order is already cancelled' });
+        }
+        if (['completed', 'shipped', 'returned'].includes(order.status)) {
+            await client.query('ROLLBACK');
+            return res.status(409).json({ error: `Cannot cancel an order with status '${order.status}'` });
         }
 
         const itemsRes = await client.query(
@@ -359,7 +385,7 @@ app.patch('/api/orders/:id/cancel', async (req, res) => {
     }
 });
 
-// Reporting: sales summary + low-stock inventory
+// Reporting: realized sales summary (excludes pending & cancelled) + low-stock inventory
 app.get('/api/reports/summary', async (_req, res) => {
     try {
         const salesRes = await query(`
@@ -367,7 +393,7 @@ app.get('/api/reports/summary', async (_req, res) => {
                    COALESCE(SUM(oi.quantity * oi.unit_price), 0)::NUMERIC(10,2) AS total_revenue
             FROM orders o
             LEFT JOIN order_item oi ON oi.order_id = o.order_id
-            WHERE o.status <> 'cancelled'
+            WHERE o.status IN ('paid', 'processing', 'shipped', 'completed')
         `);
         const lowStockRes = await query(`
             SELECT i.store_number, p.part_id, p.name, i.quantity
@@ -383,6 +409,119 @@ app.get('/api/reports/summary', async (_req, res) => {
     } catch (error) {
         console.error('Failed to generate report:', error);
         res.status(500).json({ error: 'Failed to generate report' });
+    }
+});
+
+// Manager view: list employees
+app.get('/api/employees', async (req, res) => {
+    try {
+        const { store_number } = req.query;
+        const sql = store_number
+            ? `SELECT employee_id, username, first_name, last_name, work_email, phone_number, store_number
+               FROM employee WHERE store_number = $1 ORDER BY employee_id ASC`
+            : `SELECT employee_id, username, first_name, last_name, work_email, phone_number, store_number
+               FROM employee ORDER BY employee_id ASC`;
+        const params = store_number ? [Number(store_number)] : [];
+        const { rows } = await query(sql, params);
+        res.json(rows);
+    } catch (error) {
+        console.error('Failed to fetch employees:', error);
+        res.status(500).json({ error: 'Failed to fetch employees' });
+    }
+});
+
+// Manager view: add employee
+app.post('/api/employees', async (req, res) => {
+    const {
+        employee_id,
+        username,
+        password,
+        password_hash,
+        first_name,
+        last_name,
+        work_email,
+        phone_number,
+        store_number = null,
+    } = req.body;
+
+    const hashValue = password_hash || password;
+    if (!username || !hashValue || !first_name || !last_name || !work_email || !phone_number) {
+        return res.status(400).json({ error: 'Missing required employee fields' });
+    }
+
+    try {
+        const nextIdRes = employee_id
+            ? { rows: [{ next_id: Number(employee_id) }] }
+            : await query('SELECT COALESCE(MAX(employee_id), 0) + 1 AS next_id FROM employee');
+        const newEmpId = Number(nextIdRes.rows[0].next_id);
+
+        const { rows } = await query(
+            `INSERT INTO employee (employee_id, username, password_hash, first_name, last_name, work_email, phone_number, store_number)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             RETURNING employee_id, username, first_name, last_name, work_email, phone_number, store_number`,
+            [
+                newEmpId,
+                String(username).trim(),
+                String(hashValue),
+                String(first_name).trim(),
+                String(last_name).trim(),
+                String(work_email).trim(),
+                String(phone_number).trim(),
+                store_number ? Number(store_number) : null,
+            ]
+        );
+        res.status(201).json(rows[0]);
+    } catch (error) {
+        if (error.code === '23505') {
+            return res.status(409).json({ error: 'Employee ID, username, or work email already exists' });
+        }
+        if (error.code === '23503') {
+            return res.status(400).json({ error: 'Invalid store_number' });
+        }
+        console.error('Failed to add employee:', error);
+        res.status(500).json({ error: 'Failed to add employee' });
+    }
+});
+
+// Manager view: remove employee
+app.delete('/api/employees/:id', async (req, res) => {
+    const empId = Number(req.params.id);
+    if (!Number.isInteger(empId)) {
+        return res.status(400).json({ error: 'Invalid employee ID' });
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        await client.query(
+            'UPDATE store SET manager_id = NULL WHERE manager_id = $1',
+            [empId]
+        );
+
+        const delRes = await client.query(
+            `DELETE FROM employee
+             WHERE employee_id = $1
+             RETURNING employee_id, username`,
+            [empId]
+        );
+
+        if (delRes.rowCount === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'Employee not found' });
+        }
+
+        await client.query('COMMIT');
+        res.json({ deleted: true, employee: delRes.rows[0] });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        if (error.code === '23503') {
+            return res.status(409).json({ error: 'Cannot delete employee referenced by existing orders' });
+        }
+        console.error('Failed to delete employee:', error);
+        res.status(500).json({ error: 'Failed to delete employee' });
+    } finally {
+        client.release();
     }
 });
 
