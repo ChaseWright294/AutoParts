@@ -14,3 +14,6 @@ const post = (path, data) => request(path, { method: 'POST', body: JSON.stringif
 
 export const loginCustomer = (username, password) => post('/auth/customer/login', { username, password });
 export const loginEmployee = (username, password) => post('/auth/employee/login', { username, password });
+
+export const getInventory = () => request('/inventory');
+export const createOrder = (data) => post('/orders', data);

@@ -2,6 +2,7 @@ import './Header.css'
 import { Link, useLocation } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from './AuthContext.jsx';
+import { useCart } from './CartContext.jsx';
 
 //function to create account menu and provide dropdown functionality
 function AccountMenu() {
@@ -63,6 +64,7 @@ const pathsToHideAccount = ["/", "/join", "/employee-login"]; //paths that the a
 function Header({ title }) {
     const { pathname } = useLocation();
     const { user } = useAuth();
+    const { cartCount } = useCart();
     const shouldBeHidden = pathsToHideAccount.includes(pathname);
 
     return(
@@ -85,7 +87,17 @@ function Header({ title }) {
                     }
             </div>)}
             <h2 className='title-text'>{title}</h2>
-            {!shouldBeHidden && <AccountMenu />}
+            {!shouldBeHidden && (
+                <div className="header-actions">
+                    {user?.role === 'customer' && (
+                        <Link to="/checkout" className="cart-button">
+                            Cart ({cartCount})
+                        </Link>
+                    )}
+
+                    <AccountMenu />
+                </div>
+            )}
         </div>
     );
 }
