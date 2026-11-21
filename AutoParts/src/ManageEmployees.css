@@ -1,0 +1,150 @@
+.employee-management {
+    max-width: 1250px;
+    margin: 35px auto;
+    padding: 20px;
+    color: #222;
+    text-align: left;
+}
+
+.employee-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.employee-toolbar h2 {
+    margin: 0 0 8px;
+}
+
+.employee-toolbar p {
+    margin: 0;
+    color: #666;
+}
+
+.employee-primary {
+    background: #d90000;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 20px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.employee-primary:hover {
+    background: #b70000;
+}
+
+.employee-form {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 8px #00000010;
+}
+
+.employee-form h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.employee-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.employee-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.employee-form input,
+.employee-search {
+    background: white;
+    color: #222;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 12px;
+    font-size: 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.employee-search {
+    max-width: 400px;
+    margin-bottom: 20px;
+}
+
+.employee-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.employee-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    text-align: left;
+}
+
+.employee-table th,
+.employee-table td {
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+}
+
+.employee-table th {
+    background: #eee;
+    white-space: nowrap;
+}
+
+.employee-table tr:hover {
+    background: #fafafa;
+}
+
+.employee-delete {
+    color: #d00000;
+    background: transparent;
+    border: 1px solid #d00000;
+    border-radius: 5px;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.employee-management button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.employee-error {
+    background: #fff0f0;
+    color: #b00000;
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.employee-success {
+    background: #edf8ee;
+    color: #23732b;
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.employee-count {
+    color: #666;
+    margin-top: 15px;
+}
+
+@media (max-width: 700px) {
+    .employee-form-grid {
+        grid-template-columns: 1fr;
+    }
+}

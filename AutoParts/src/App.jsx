@@ -12,6 +12,8 @@ import Inventory from './Inventory.jsx'
 import Account from './Account.jsx'
 import Orders from './Orders.jsx'
 import PartInfo from './PartInfo.jsx'
+import ManageEmployees from './ManageEmployees.jsx'
+
 
 function App() {
   return (
@@ -27,6 +29,7 @@ function App() {
           <Route path="/account" element={<Account />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/part-info/:partId" element={<PartInfo />} />
+          <Route path="/manage-employees" element={<ManageEmployees />} />
 
         </Routes>
       </BrowserRouter>

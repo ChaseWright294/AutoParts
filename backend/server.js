@@ -467,7 +467,6 @@ app.get('/api/employees', async (req, res) => {
 // Manager view: add employee
 app.post('/api/employees', async (req, res) => {
     const {
-        employee_id,
         username,
         password,
         password_hash,
@@ -479,22 +478,24 @@ app.post('/api/employees', async (req, res) => {
     } = req.body;
 
     const hashValue = password_hash || password;
-    if (!username || !hashValue || !first_name || !last_name || !work_email || !phone_number) {
-        return res.status(400).json({ error: 'Missing required employee fields' });
+
+    if (!username || !hashValue || !first_name ||
+        !last_name || !work_email || !phone_number) {
+        return res.status(400).json({
+            error: 'Missing required employee fields'
+        });
     }
 
     try {
-        const nextIdRes = employee_id
-            ? { rows: [{ next_id: Number(employee_id) }] }
-            : await query('SELECT COALESCE(MAX(employee_id), 0) + 1 AS next_id FROM employee');
-        const newEmpId = Number(nextIdRes.rows[0].next_id);
-
         const { rows } = await query(
-            `INSERT INTO employee (employee_id, username, password_hash, first_name, last_name, work_email, phone_number, store_number)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-             RETURNING employee_id, username, first_name, last_name, work_email, phone_number, store_number`,
+            `INSERT INTO employee (
+                username, password_hash, first_name,
+                last_name, work_email, phone_number, store_number
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING employee_id, username, first_name,
+                      last_name, work_email, phone_number, store_number`,
             [
-                newEmpId,
                 String(username).trim(),
                 String(hashValue),
                 String(first_name).trim(),
@@ -504,16 +505,27 @@ app.post('/api/employees', async (req, res) => {
                 store_number ? Number(store_number) : null,
             ]
         );
+
         res.status(201).json(rows[0]);
     } catch (error) {
         if (error.code === '23505') {
-            return res.status(409).json({ error: 'Employee ID, username, or work email already exists' });
+            console.error('Employee creation error:', error);
+            console.error('Duplicate employee:', error.constraint, error.detail);
+            return res.status(409).json({
+                error: 'Employee ID, username, or work email already exists'
+            });
         }
+
         if (error.code === '23503') {
-            return res.status(400).json({ error: 'Invalid store_number' });
+            return res.status(400).json({
+                error: 'Invalid store_number'
+            });
         }
+
         console.error('Failed to add employee:', error);
-        res.status(500).json({ error: 'Failed to add employee' });
+        res.status(500).json({
+            error: 'Failed to add employee'
+        });
     }
 });
 
